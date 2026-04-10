@@ -6,7 +6,7 @@ compatibility: requires git repository access, commit history, and code diffs
 
 # Code Review by JIRA Ticket
 
-**Command:** `/code-review-jira $ARGUMENTS`
+**Command:** `/code-review $ARGUMENTS`
 
 ## Step 0: Parse the Argument
 
@@ -28,26 +28,26 @@ The user's argument is: `$ARGUMENTS`
 
 ```bash
 # Full review (default: all commits with ticket, both detailed + PR-ready)
-/code-review-jira AJB-2134
+/code-review AJB-2134
 
 # Review commits by specific author
-/code-review-jira AJB-2134 --author johndoe@eg.dk
-/code-review-jira AJB-2134 --author johndoe766
+/code-review AJB-2134 --author johndoe@eg.dk
+/code-review AJB-2134 --author johndoe766
 
 # Review by author with full name (quoted)
-/code-review-jira AJB-2134 --author "John Doe"
+/code-review AJB-2134 --author "John Doe"
 
 # Summary only (quick PR feedback)
-/code-review-jira AJB-2134 --detail summary
+/code-review AJB-2134 --detail summary
 
 # Review commits by author + summary format
-/code-review-jira AJB-2134 --author johndoe --detail summary
+/code-review AJB-2134 --author johndoe --detail summary
 
 # Detailed report only
-/code-review-jira AJB-2134 --output standalone
+/code-review AJB-2134 --output standalone
 
 # PR-ready format only (specific author)
-/code-review-jira AJB-2134 --author "Jane Smith" --output pr
+/code-review AJB-2134 --author "Jane Smith" --output pr
 ```
 
 ## Process (Read-Only Analysis)
@@ -57,10 +57,11 @@ The user's argument is: `$ARGUMENTS`
    - The JIRA ticket number in the commit message
    - (Optional) Matching the specified author if --author is provided
    - Command: `git log --grep="AJB-XXXX" --author="<username>"` (if author specified)
-3. **Extract changes** — Get the full diff of all matching commits (`git show`, `git diff`)
-4. **Categorize changes** — Identify files by type (.NET backend, React/TypeScript frontend, configuration, tests, etc.)
-5. **Analyze against standards** — Apply both general and repository-specific review criteria (local analysis only)
-6. **Generate output** — Create both detailed report and PR-ready format (no code modifications)
+3. **Load codebase knowledge** — Read `.knowledge/CODEBASE.md` to identify the module map. From the changed files found in commits, determine which modules are affected. Do not ask the user — infer from file paths matched against the module map. For each affected module, load `.knowledge/<module-folder>/knowledge.md` and `.knowledge/<module-folder>/patterns.md`. If no `.knowledge/` folder exists at the project root, skip silently and continue.
+4. **Extract changes** — Get the full diff of all matching commits (`git show`, `git diff`)
+5. **Categorize changes** — Identify files by type (.NET backend, React/TypeScript frontend, configuration, tests, etc.)
+6. **Analyze against standards** — Apply both general and repository-specific review criteria (local analysis only), cross-referencing patterns and anti-patterns loaded from `.knowledge/`
+7. **Generate output** — Create both detailed report and PR-ready format (no code modifications)
 
 **Author Filter Matching**:
 - Matches against `git log --author` which checks both name and email
@@ -87,6 +88,13 @@ The user's argument is: `$ARGUMENTS`
 - **Commands**: Commands include ContextMetadata for audit trail, proper aggregate ID references
 - **Projections**: Test idempotency, verify events properly transform to read models
 - **Testing**: BDD style with AutoFixture, proper Given-When-Then structure
+
+### Module-Specific Patterns (from `.knowledge/`)
+- For each affected module, apply the canonical patterns from `patterns.md` as a review checklist
+- Flag any code that matches anti-patterns listed in the module's `patterns.md`
+- Flag any violation of business rules or domain constraints documented in `knowledge.md`
+- Flag any deviation from public contracts defined in `knowledge.md` as [CONTRACT VIOLATION]
+- Flag any contradiction between the committed code and `.knowledge/` documentation as [CONFLICT] — note it in Risks & Considerations
 
 ### Security Review
 - No hardcoded credentials or secrets
@@ -118,6 +126,7 @@ Use this structure:
 - Files added: X
 - Test coverage: [Improved/Maintained/Decreased]
 - Risk level: [🟢 Low / 🟡 Medium / 🔴 High]
+- Modules affected: [list of module names inferred from changed file paths]
 
 ## Overview of Changes
 Brief description of what this commit set accomplishes.
@@ -125,6 +134,9 @@ Brief description of what this commit set accomplishes.
 ## 📋 Checklist Summary
 - ✅ or ❌ Follows event sourcing patterns
 - ✅ or ❌ Proper DDD aggregate structure
+- ✅ or ❌ Follows module-specific patterns (from .knowledge/)
+- ✅ or ❌ No business rule violations (from .knowledge/)
+- ✅ or ❌ Public contracts respected (from .knowledge/)
 - ✅ or ❌ Security review passed
 - ✅ or ❌ Test coverage maintained or improved
 - ✅ or ❌ Error handling adequate
@@ -169,6 +181,7 @@ Issues that could cause bugs, security vulnerabilities, or production problems.
 
 ### 🟡 Important
 Issues that affect code quality, maintainability, or test coverage.
+Include [CONTRACT VIOLATION] and [CONFLICT] flags here if applicable.
 
 ### 🟢 Nice to Have
 Suggestions for future improvement or consistency.
@@ -216,7 +229,7 @@ File: path/to/file.cs (Line X-Y)
 - **File types**: Determine file type from extension (.cs, .tsx, .sql, .json, etc.)
 - **Context matters**: Read nearby code and existing patterns in the repository to understand the context
 - **Be constructive**: Frame suggestions as learning opportunities, not criticism
-- **Reference patterns**: When recommending changes, reference existing code in the repo as examples where possible (from CLAUDE.md architecture description or observed patterns)
+- **Reference patterns**: When recommending changes, reference existing code in the repo as examples where possible — prefer examples from `.knowledge/<module>/patterns.md` over generic suggestions
 
 ## ⚠️ SAFETY RULES - READ-ONLY OPERATIONS ONLY
 
@@ -234,6 +247,7 @@ File: path/to/file.cs (Line X-Y)
 - ✅ `git show` — Display commit diffs and full context
 - ✅ `git diff` — Compare commits or branches
 - ✅ Read local files — Access code for analysis
+- ✅ Read `.knowledge/` files — Load module knowledge for context-aware review
 - ✅ Search files with grep/ripgrep — Find patterns and references
 - ✅ Parse and analyze code — Detect issues, patterns, security concerns
 - ✅ Generate reports — Output analysis and recommendations
@@ -245,7 +259,7 @@ File: path/to/file.cs (Line X-Y)
 - 🚫 **No branch switching**: Never modify the current branch with `git checkout` or `git switch`
 
 ### Scope
-This skill is a **read-only analysis tool**. It generates insights and recommendations but never modifies code, configuration, or repository state. All output is informational only—actual implementation of recommendations requires manual action by the developer.
+This skill is a **read-only analysis tool**. It generates insights and recommendations but never modifies code, configuration, or repository state. All output is informational only — actual implementation of recommendations requires manual action by the developer.
 
 ## Usage Help
 
@@ -255,13 +269,13 @@ When user provides no argument or invalid format, show this:
 Code Review by JIRA Ticket
 
 USAGE:
-  /code-review-jira AJB-XXXX [OPTIONS]
+  /code-review AJB-XXXX [OPTIONS]
 
 DESCRIPTION:
   Reviews commits related to a JIRA ticket for best practices, security,
   test coverage, and architectural compliance. Analyzes against both
   general standards (.NET 8, React) and repository patterns (DDD,
-  event sourcing). Optionally filter by commit author/username.
+  event sourcing), plus module-specific patterns from .knowledge/.
 
 ARGUMENTS:
   AJB-XXXX                     JIRA ticket number (required)
@@ -284,14 +298,14 @@ OPTIONS:
 
 EXAMPLES:
   # Review all commits for ticket
-  /code-review-jira AJB-2134
+  /code-review AJB-2134
 
   # Review commits by specific author
-  /code-review-jira AJB-2134 --author "John Doe"
-  /code-review-jira AJB-2134 --author johndoe@example.com
+  /code-review AJB-2134 --author "John Doe"
+  /code-review AJB-2134 --author johndoe@example.com
 
   # Combine options
-  /code-review-jira AJB-2134 --detail summary
-  /code-review-jira AJB-2134 --author johndoe --output pr
-  /code-review-jira AJB-2134 --author "Jane Smith" --detail detailed
+  /code-review AJB-2134 --detail summary
+  /code-review AJB-2134 --author johndoe --output pr
+  /code-review AJB-2134 --author "Jane Smith" --detail detailed
 ```
