@@ -31,9 +31,21 @@ Use the `mcp__mcp-jira-service__jira_get_issue` MCP tool to retrieve:
 
 If the ticket references other JIRA tickets (in description, comments, or links), fetch those too for full context.
 
-## Step 3: Codebase Exploration
+## Step 3: Load Codebase Knowledge
 
-Based on the ticket details, explore the codebase to understand:
+Read `.knowledge/CODEBASE.md` to identify the module map and cross-cutting patterns.
+
+From the ticket details (summary, description, components, labels), determine which of the 4 modules are affected. Do not ask the user — infer from the ticket content and the module map in `CODEBASE.md`.
+
+For each affected module, load:
+- `.knowledge/<module-folder>/knowledge.md` — architecture decisions, business rules, public contracts
+- `.knowledge/<module-folder>/patterns.md` — canonical patterns and anti-patterns to apply during planning
+
+If no `.knowledge/` folder exists at the project root, skip this step silently and continue.
+
+## Step 4: Codebase Exploration
+
+Based on the ticket details and knowledge loaded in Step 3, explore the codebase to understand:
 - Which modules, packages, or files are likely affected
 - Existing patterns and conventions in those areas
 - Related tests that exist or will need updating
@@ -41,7 +53,7 @@ Based on the ticket details, explore the codebase to understand:
 
 Use Glob, Grep, and Read tools (or the Explore subagent for deeper research) to gather this information.
 
-## Step 4: Enter Plan Mode & Present the Plan
+## Step 5: Enter Plan Mode & Present the Plan
 
 **You MUST enter plan mode** using the `EnterPlanMode` tool before presenting the implementation plan.
 
@@ -69,13 +81,14 @@ Structure the plan as:
 - Potential side effects or breaking changes
 - Open questions that need clarification
 - Dependencies on other tickets or external factors
+- Any conflicts between `.knowledge/` documentation and current code (flagged as [CONFLICT])
 
 ### Estimated Scope
 - List of files to create/modify/delete
 
 Then use `ExitPlanMode` to present the plan for user approval.
 
-## Step 5: Implement (Only After User Approval)
+## Step 6: Implement (Only After User Approval)
 
 **Do NOT begin implementation until the user explicitly approves the plan.**
 
