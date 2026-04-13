@@ -11,6 +11,7 @@ This repository contains custom Claude Code skills tailored for the **Xena** pro
 | [code-review](#code-review) | `/code-review XNA-XXXXX` | Comprehensive code review by JIRA ticket |
 | [create-jira-ticket](#create-jira-ticket) | `/create-jira-ticket [description]` | Create structured JIRA tickets with templates per issue type |
 | [review-jira](#review-jira) | `/review-jira XNA-XXXXX` | Analyse a JIRA ticket and plan implementation |
+| [review-jira-qa](#review-jira-qa) | `/review-jira-qa XNA-XXXXX` | QA analysis of a JIRA ticket with Git commit analysis, impact assessment, and test case generation |
 | [secfix](#secfix) | `/secfix XNA-XXXXX` | Security vulnerability fix workflow |
 | [ship](#ship) | `/ship [commit\|push\|pr]` | Commit, push, and create PRs with conventional format |
 | [technotes](#technotes) | `/technotes <confluence-url>` | Generate technical release notes on Confluence |
@@ -111,6 +112,47 @@ Fetches a JIRA ticket via MCP, explores the Xena codebase to identify all affect
 4. Implements the plan step-by-step after user approval
 
 **Integrations:** JIRA MCP (required), Git
+
+---
+
+### review-jira-qa
+
+QA-focused analysis of a JIRA ticket. Reads the ticket, mines Git commits and code changes, assesses UI and functionality breakage risk, and generates prioritized test cases. Optionally pushes test cases directly to Zephyr Scale.
+
+**Usage:**
+```bash
+/review-jira-qa XNA-18827
+/review-jira-qa https://jira.eg.dk/browse/XNA-18827
+```
+
+**Workflow:**
+1. Fetches full ticket details from JIRA including development panel (linked commits, PRs, branches)
+2. Runs Git analysis from two sources — JIRA-linked commits and local git history (graceful fallback if either is unavailable)
+3. Mines full commit message bodies for edge cases, known limitations, and fixup patterns
+4. Reads changed code files; finds all dependent files via Grep/Glob
+5. Runs a multi-tenancy safety check on every backend change (Xena-specific)
+6. Checks existing test coverage to avoid duplicating automated tests
+7. Assesses UI and functionality breakage risk per changed file type
+8. Generates test scenarios and detailed test cases with P1/P2/P3 priority and severity ratings
+9. Produces a structured output including Quick Smoke Test Checklist, Test Data Prerequisites, and risk-rated Risks & Gaps
+10. Optionally pushes all test cases to Zephyr Scale with folder management
+
+**What it produces:**
+- Git commit analysis (source, pattern, message insights)
+- Code change impact analysis (backend/frontend/database/config + dependent files)
+- Multi-tenancy findings
+- Quick smoke test checklist (5–7 highest-risk items first)
+- Test data & environment prerequisites
+- Full test scenarios and detailed test cases (step-by-step or BDD, your choice)
+- Risks & Gaps rated 🔴 HIGH / 🟡 MEDIUM / 🟢 LOW
+- ⚠️ Git & Repository Access Summary (only shown when data was missing)
+
+**Graceful degradation:**
+- Repo inaccessible → uses commit messages for context
+- No git integration → proceeds with ticket-only analysis
+- Both cases noted transparently in the output
+
+**Integrations:** JIRA MCP (required), Git (optional), Zephyr Scale REST API (optional)
 
 ---
 
@@ -231,7 +273,7 @@ These skills require the following to be configured in your Claude Code environm
 | Requirement | Used By | Purpose |
 |-------------|---------|---------|
 | Git repository | All skills | Branch detection, commit history, diffs |
-| JIRA MCP server | review-jira, secfix, worklog, technotes, code-review, create-jira-ticket | Ticket fetching, creation, worklog submission, comments |
+| JIRA MCP server | review-jira, review-jira-qa, secfix, worklog, technotes, code-review, create-jira-ticket | Ticket fetching, creation, worklog submission, comments |
 | GitHub MCP server | ship, secfix | PR creation and management |
 | Confluence MCP server | technotes | Page creation and template discovery |
 | Xenapedia (web) | create-jira-ticket | Product behavior reference (optional, graceful degradation) |
@@ -271,6 +313,8 @@ your-project/
         ├── create-jira-ticket/
         │   └── SKILL.md
         ├── review-jira/
+        │   └── SKILL.md
+        ├── review-jira-qa/
         │   └── SKILL.md
         ├── secfix/
         │   └── SKILL.md
