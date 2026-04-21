@@ -10,6 +10,7 @@ This repository contains custom Claude Code skills tailored for the **Xena** pro
 |-------|---------|-------------|
 | [code-review](#code-review) | `/code-review XNA-XXXXX` | Comprehensive code review by JIRA ticket |
 | [create-jira-ticket](#create-jira-ticket) | `/create-jira-ticket [description]` | Create structured JIRA tickets with templates per issue type |
+| [path-finder-qa](#path-finder-qa) | `/path-finder-qa <view-or-feature>` | Locate a view, tab, pop-up or form in Xena via Xenapedia, Confluence, and codebase |
 | [review-jira](#review-jira) | `/review-jira XNA-XXXXX` | Analyse a JIRA ticket and plan implementation |
 | [review-jira-qa](#review-jira-qa) | `/review-jira-qa XNA-XXXXX` | QA analysis of a JIRA ticket with Git commit analysis, impact assessment, and test case generation |
 | [secfix](#secfix) | `/secfix XNA-XXXXX` | Security vulnerability fix workflow |
@@ -81,6 +82,44 @@ Creates structured JIRA tickets with professional descriptions, automatic summar
 **Confirmation gates:** Draft approval required before creation. Failed submissions preserve the approved draft.
 
 **Integrations:** JIRA MCP (required), Xenapedia (optional, graceful degradation)
+
+---
+
+### path-finder-qa
+
+Navigation lookup helper for QA. Given a view, tab, pop-up, window, or form name, searches **Xenapedia**, **Confluence**, and the codebase to return every navigation path where that UI element can be found in Xena. Always returns at least an approximate answer — never stops because a single source is unavailable.
+
+**Usage:**
+```bash
+/path-finder-qa voucher registration tab
+/path-finder-qa "Create Invoice" pop-up
+/path-finder-qa partner card form
+```
+
+**Workflow:**
+1. Normalizes the query — extracts the target label, element kind (tab / pop-up / form / etc.), domain hints, and common Xena synonyms (Voucher ↔ Bilag, Article ↔ Item, Partner ↔ Customer, …)
+2. Searches Xenapedia first (the authoritative end-user navigation source) via `WebFetch` / `WebSearch`
+3. Searches Confluence next via the Confluence MCP for internal specs, feature designs, and QA docs
+4. Falls back to the codebase only if the above yield nothing — `Glob`/`Grep` for Razor views, TypeScript, resource strings, controllers, and menu configuration, then translates technical findings into a human-friendly path
+5. Deduplicates and classifies every candidate path as ✅ **Exact**, 🟡 **Likely**, or 🟠 **Approximate**
+6. Presents a short QA-friendly report — navigation paths first, then reference pages, preconditions, and a transparent notes-and-gaps section if any data source was unavailable
+
+**What it produces:**
+- Ranked list of navigation paths (✅ / 🟡 / 🟠) with a one-line source note per path
+- Reference Xenapedia and Confluence page links actually consulted
+- Preconditions (module enabled, role required, feature flag, etc.) when mentioned in sources
+- ⚠️ Notes & Gaps section listing any source that was unreachable (only shown when relevant)
+- One-line "next step for QA" so the QA knows what to do with the answer
+
+**Graceful degradation:**
+- Xenapedia unreachable → falls back to Confluence + codebase
+- Confluence MCP unavailable → falls back to Xenapedia + codebase
+- Codebase inaccessible → returns documented paths only, labels gaps clearly
+- Never fabricates paths — inferred routes are always marked 🟠 **Approximate**
+
+**Safety:** Strictly read-only. No file edits, no JIRA or Confluence writes, no commits.
+
+**Integrations:** Xenapedia (web, optional), Confluence MCP (optional), local repo (optional)
 
 ---
 
@@ -275,8 +314,8 @@ These skills require the following to be configured in your Claude Code environm
 | Git repository | All skills | Branch detection, commit history, diffs |
 | JIRA MCP server | review-jira, review-jira-qa, secfix, worklog, technotes, code-review, create-jira-ticket | Ticket fetching, creation, worklog submission, comments |
 | GitHub MCP server | ship, secfix | PR creation and management |
-| Confluence MCP server | technotes | Page creation and template discovery |
-| Xenapedia (web) | create-jira-ticket | Product behavior reference (optional, graceful degradation) |
+| Confluence MCP server | technotes, path-finder-qa | Page creation, template discovery, internal navigation lookup |
+| Xenapedia (web) | create-jira-ticket, path-finder-qa | Product behavior reference and navigation paths (optional, graceful degradation) |
 
 ## Installation
 
@@ -312,6 +351,8 @@ your-project/
         │   └── SKILL.md
         ├── create-jira-ticket/
         │   └── SKILL.md
+        ├── path-finder-qa/
+        │   └── SKILL.md
         ├── review-jira/
         │   └── SKILL.md
         ├── review-jira-qa/
@@ -335,6 +376,7 @@ Once installed, invoke any skill using the `/skill-name` command in Claude Code:
 ```
 /code-review XNA-18827
 /create-jira-ticket Fix the checkbox alignment on the invoice page
+/path-finder-qa voucher registration tab
 /review-jira XNA-18827
 /secfix XNA-19000
 /ship pr
