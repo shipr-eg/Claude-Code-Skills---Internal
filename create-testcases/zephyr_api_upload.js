@@ -10,7 +10,7 @@
  * - Column 2 (Status): Draft, Approved, Deprecated
  * - Column 3 (Precondition): Prerequisites for test case
  * - Column 4 (Objective): Test objective
- * - Column 6 (Priority): High, Medium, Low
+ * - Column 6 (Priority): High, Normal, Low (Jira's Medium is mapped to Zephyr's Normal)
  * - Columns 14-16: Step description, Test Data, Expected Result
  *
  * Step rows have empty Name column but contain step data in columns 14-16.
@@ -19,7 +19,28 @@
 const fs = require('fs');
 const https = require('https');
 
-// Load .env properly
+// ===================================
+// CONFIGURATION - Update these values
+// ===================================
+const CONFIG = {
+    // Zephyr API Token (also checks .env ZEPHYR_API_TOKEN)
+    ZEPHYR_API_TOKEN: process.env.ZEPHYR_API_TOKEN || '',
+
+    // Zephyr Base URL (e.g., https://jira.eg.dk)
+    ZEPHYR_BASE_URL: 'https://jira.eg.dk',
+
+    // Zephyr Project ID (numeric, e.g., 14901)
+    PROJECT_ID: 14901,
+
+    // Parent Folder ID where test case subfolders will be created (e.g., 26283 for AjourBox)
+    PARENT_ID: 26283,
+
+    // JIRA User Key for test case owner (e.g., JIRAUSER33050)
+    JIRA_USER_KEY: 'JIRAUSER33050'
+};
+// ===================================
+
+// Load .env properly (overrides CONFIG if present)
 const envContent = fs.readFileSync('.env', 'utf-8');
 const envVars = {};
 envContent.split(/\r?\n/).forEach(line => {
@@ -34,11 +55,11 @@ envContent.split(/\r?\n/).forEach(line => {
     envVars[key] = value;
 });
 
-const API_TOKEN = envVars.ZEPHYR_API_TOKEN;
-const BASE_URL = envVars.ZEPHYR_BASE_URL || 'https://jira.eg.dk';
-const PROJECT_ID = parseInt(envVars.PROJECT_ID || '14901');
-const AJOURBOX_ID = parseInt(envVars.PARENT_ID || '26283');  // AjourBox folder ID
-const OWNER = envVars.JIRA_USER_KEY || 'JIRAUSER33050';
+const API_TOKEN = envVars.ZEPHYR_API_TOKEN || CONFIG.ZEPHYR_API_TOKEN;
+const BASE_URL = envVars.ZEPHYR_BASE_URL || CONFIG.ZEPHYR_BASE_URL;
+const PROJECT_ID = parseInt(envVars.PROJECT_ID || CONFIG.PROJECT_ID);
+const AJOURBOX_ID = parseInt(envVars.PARENT_ID || CONFIG.PARENT_ID);
+const OWNER = envVars.JIRA_USER_KEY || CONFIG.JIRA_USER_KEY;
 const { execSync } = require('child_process');
 
 if (!API_TOKEN) {
@@ -98,6 +119,7 @@ function priorityId(p) {
     if (p.includes('Critical')) return 1407;
     if (p.includes('High')) return 1408;
     if (p.includes('Low')) return 1410;
+    // Jira "Medium" → Zephyr "Normal" (1409)
     return 1409;
 }
 
