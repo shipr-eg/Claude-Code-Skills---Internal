@@ -8,6 +8,7 @@ This repository contains custom Claude Code skills tailored for the **Xena** pro
 
 | Skill | Command | Description |
 |-------|---------|-------------|
+| [architecture-analysis](#architecture-analysis) | `/architecture-analysis [path]` | Full architectural analysis of a module with Mermaid diagrams and scorecard |
 | [code-review](#code-review) | `/code-review XNA-XXXXX` | Comprehensive code review by JIRA ticket |
 | [create-jira-ticket](#create-jira-ticket) | `/create-jira-ticket [description]` | Create structured JIRA tickets with templates per issue type |
 | [path-finder-qa](#path-finder-qa) | `/path-finder-qa <view-or-feature>` | Locate a view, tab, pop-up or form in Xena via Xenapedia, Confluence, and codebase |
@@ -21,6 +22,41 @@ This repository contains custom Claude Code skills tailored for the **Xena** pro
 ---
 
 ## Skill Details
+
+### architecture-analysis
+
+**Read-only** complete architectural analysis of a module or project directory. Produces production-grade documentation suitable for developers, architects, technical leads, product owners, and onboarding engineers.
+
+**Usage:**
+```bash
+/architecture-analysis                                # Analyse the current workspace / opened module
+/architecture-analysis src/Xena.BookkeepingService   # Analyse a specific module path
+```
+
+**Workflow:**
+1. **Discovery** — walks the directory tree, reads root manifests (`*.csproj`, `*.sln`, `package.json`, `appsettings*.json`, `Dockerfile`, etc.), identifies language/framework/runtime, and inventories controllers, services, repositories, DTOs, entities, handlers, jobs, migrations, and tests
+2. **Deep analysis** — traces constructor dependencies, DI registrations, call graphs, persistence mappings (NHibernate / EF / raw SQL / stored procs), messaging (Rebus / Kafka / RabbitMQ / Azure Service Bus / Hangfire / Quartz), and security (`[Authorize]`, multi-tenancy filters, secret handling). Uses the `Explore` subagent in parallel for large modules.
+3. **Synthesis** — produces an 18-section report plus a Module Architecture Scorecard.
+
+**What it produces:**
+- Module overview, architecture pattern detection, and directory structure analysis
+- Per-component breakdown (purpose, dependencies, callers, methods, business rules, risks)
+- Request flow analysis and Mermaid **data flow**, **sequence**, and **end-to-end architecture** diagrams
+- Dependency analysis (internal projects, external NuGet/npm, shared components, cross-module)
+- Database interaction analysis with ER-style description
+- Business logic, integration, configuration, error handling, and security analyses (OWASP Top 10)
+- Developer walkthrough ("if a new dev joins tomorrow…")
+- Technical debt & prioritized improvement recommendations
+- Executive summary
+- Module Architecture Scorecard (Maintainability / Scalability / Testability / Security / Performance / Complexity, 1–10) with production-readiness verdict
+
+**Formatting:** Strict Markdown + Mermaid rules — `<br/>` (never `\n`) in node labels, quoted labels with special characters, blank lines around tables and fenced blocks — so output renders cleanly in VS Code preview, GitHub, and Confluence.
+
+**Output:** Renders the full report in chat and saves it to `./architecture-analysis-<module-name>-<yyyyMMdd>.md` in the workspace.
+
+**Safety:** Strictly read-only. No code modifications, no commits, no remote operations.
+
+---
 
 ### code-review
 
@@ -313,6 +349,7 @@ These skills require the following to be configured in your Claude Code environm
 |-------------|---------|---------|
 | Git repository | All skills | Branch detection, commit history, diffs |
 | JIRA MCP server | review-jira, review-jira-qa, secfix, worklog, technotes, code-review, create-jira-ticket | Ticket fetching, creation, worklog submission, comments |
+| Workspace file access | architecture-analysis | Read source, config, and manifest files for module analysis |
 | GitHub MCP server | ship, secfix | PR creation and management |
 | Confluence MCP server | technotes, path-finder-qa | Page creation, template discovery, internal navigation lookup |
 | Xenapedia (web) | create-jira-ticket, path-finder-qa | Product behavior reference and navigation paths (optional, graceful degradation) |
@@ -347,6 +384,8 @@ xcopy /E /I "C:\path\to\Claude-Code-Skills---Internal\*" "C:\path\to\your-projec
 your-project/
 └── .claude/
     └── skills/
+        ├── architecture-analysis/
+        │   └── SKILL.md
         ├── code-review/
         │   └── SKILL.md
         ├── create-jira-ticket/
@@ -374,6 +413,7 @@ After copying, restart Claude Code or reload the configuration. The skills will 
 Once installed, invoke any skill using the `/skill-name` command in Claude Code:
 
 ```
+/architecture-analysis src/Xena.BookkeepingService
 /code-review XNA-18827
 /create-jira-ticket Fix the checkbox alignment on the invoice page
 /path-finder-qa voucher registration tab
@@ -400,6 +440,9 @@ Refer to the individual skill sections above for full usage details and options.
 
 ### Review before merging
 1. `/code-review XNA-XXXXX` — get a detailed review of all changes for a ticket
+
+### Onboard onto a module
+1. `/architecture-analysis src/Xena.<Module>` — generate a full architectural overview with diagrams and scorecard
 
 ### Document a release
 1. `/technotes https://confluence.eg.dk/display/XNA/Release+Notes` — generate and publish release notes
