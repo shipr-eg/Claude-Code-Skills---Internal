@@ -1,11 +1,11 @@
 ---
-name: create-jira-ticket
+name: create-jira
 description: Create a structured Jira ticket in the YBL (EG Lønservice) project — collect inputs, enrich from codebase/Confluence, draft a wiki-markup description, and push via mcp-jira-service after explicit approval. Instance jira.eg.dk, project YBL.
 argument-hint: "[description | subtask of YBL-XXXX description | <feature-folder-path>] [<path/to/design.png>]"
 allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion, ToolSearch, mcp__mcp-jira-service__jira_create_issue, mcp__mcp-jira-service__jira_search, mcp__mcp-jira-service__jira_get_issue, mcp__mcp-jira-service__jira_search_fields, mcp__mcp-jira-service__jira_utility_deeplink, mcp__mcp-jira-service__jira_upload_attachment, mcp__mcp-confluence-service__confluence_search, mcp__mcp-confluence-service__confluence_get_page
 ---
 
-# /create-jira-ticket — structured Jira ticket for YBL
+# /create-jira — structured Jira ticket for YBL
 
 Create a clean, professional Jira ticket in the **YBL** (EG Lønservice) project. Collect the
 minimum inputs, enrich from the codebase and Confluence, draft a wiki-markup description, show it
@@ -415,5 +415,5 @@ Auto-retry **once** only for missing-required-field errors. For all other errors
 
 ## Out of scope
 
-- Editing existing tickets (use `update-jira-ticket` to update a ticket's description).
+- Editing existing tickets (use `update-jira` to update a ticket's description).
 - Confluence page creation, transitions/status changes, worklogs (see `worklog`).
