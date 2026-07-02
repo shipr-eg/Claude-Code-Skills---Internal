@@ -519,6 +519,17 @@ Then use `ExitPlanMode`.
 
 ---
 
+## Step 11.5: Save QA Review to Desktop
+
+After presenting the report, immediately save it to the Desktop using the `Write` tool:
+
+- **File path:** `~/Desktop/{TICKET_KEY}-QA review.md`
+- **Content:** The complete QA report output from Step 11 (all sections: Ticket Summary, Brief Explanation, Detailed Analysis, Git Commit Analysis, Code Change Impact Analysis, Linked Tickets, Impact Analysis, Quick Smoke Test Checklist, Test Data & Environment Prerequisites, Test Scenarios, Detailed Test Cases, Risks & Gaps, and the ⚠️ Git & Repository Access Summary if present)
+
+Inform the user: "QA review saved to Desktop as `{TICKET_KEY}-QA review.md`."
+
+---
+
 ## Step 12: Push Test Cases to Zephyr (if PUSH_TO_ZEPHYR = yes)
 
 Skip this step entirely if the user said no in Step 8.
