@@ -184,7 +184,8 @@ Fetches a JIRA ticket via MCP, explores the Xena codebase to identify all affect
    - Numbered implementation steps in dependency order (Domain -> Contracts -> Mappings -> Database -> API -> Frontend)
    - Risks, multi-tenancy implications, and open questions
    - Estimated scope (small/medium/large)
-4. Implements the plan step-by-step after user approval
+4. Saves the complete plan to `~/Desktop/{TICKET_KEY}-Dev plan.md` automatically after presenting it
+5. Implements the plan step-by-step after user approval
 
 **Integrations:** JIRA MCP (required), Git
 
@@ -221,6 +222,7 @@ QA-focused analysis of a JIRA ticket. Reads the ticket, mines Git commits and co
 - Full test scenarios and detailed test cases (step-by-step or BDD, your choice)
 - Risks & Gaps rated 🔴 HIGH / 🟡 MEDIUM / 🟢 LOW
 - ⚠️ Git & Repository Access Summary (only shown when data was missing)
+- Complete QA report saved automatically to `~/Desktop/{TICKET_KEY}-QA review.md`
 
 **Graceful degradation:**
 - Repo inaccessible → uses commit messages for context
