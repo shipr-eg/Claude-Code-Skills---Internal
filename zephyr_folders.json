@@ -1,0 +1,28 @@
+{
+  "Ajour": {
+    "id": 25794,
+    "subfolders": {
+      "RecycleBin": {
+        "id": 25900
+      },
+      "AjourBox": {
+        "id": 26283
+      },
+      "Dashboard": {
+        "id": 30491
+      },
+      "AjourTender": {
+        "id": 30501
+      },
+      "AjourInspect": {
+        "id": 30508
+      },
+      "AjourFM": {
+        "id": 30532
+      },
+      "Administration": {
+        "id": 30533
+      }
+    }
+  }
+}
