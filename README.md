@@ -11,6 +11,7 @@ This repository contains custom Claude Code skills tailored for the **Xena** pro
 | [architecture-analysis](#architecture-analysis) | `/architecture-analysis [path]` | Full architectural analysis of a module with Mermaid diagrams and scorecard |
 | [code-review](#code-review) | `/code-review XNA-XXXXX` | Comprehensive code review by JIRA ticket |
 | [create-jira-ticket](#create-jira-ticket) | `/create-jira-ticket [description]` | Create structured JIRA tickets with templates per issue type |
+| [devdocs](#devdocs) | `/devdocs XNA-XXXXX` | Generate a Developer Overview document from branch changes and JIRA comments |
 | [path-finder-qa](#path-finder-qa) | `/path-finder-qa <view-or-feature>` | Locate a view, tab, pop-up or form in Xena via Xenapedia, Confluence, and codebase |
 | [review-jira](#review-jira) | `/review-jira XNA-XXXXX` | Analyse a JIRA ticket and plan implementation |
 | [review-jira-qa](#review-jira-qa) | `/review-jira-qa XNA-XXXXX` | QA analysis of a JIRA ticket with Git commit analysis, impact assessment, and test case generation |
@@ -121,6 +122,36 @@ Creates structured JIRA tickets with professional descriptions, automatic summar
 
 ---
 
+### devdocs
+
+Generates a concise **Developer Overview** document by combining JIRA ticket context with actual code changes on the current branch. Previews the document in chat before saving — the developer must confirm before the file is written.
+
+**Usage:**
+```bash
+/devdocs XNA-18827
+/devdocs https://jira.eg.dk/browse/XNA-18827
+```
+
+**Workflow:**
+1. Fetches the JIRA ticket (summary, description, acceptance criteria, all comments for key team decisions)
+2. Runs `git diff development...HEAD` to identify all changed files on the current branch
+3. Groups changes by architectural layer (Domain → Contracts → Mappings → Database → Migrations → API → Frontend → Services → Resources → Tests)
+4. Reads each diff to produce a one-line description per file
+5. Composes a Markdown Developer Overview document including:
+   - Ticket summary and acceptance criteria
+   - Key discussions and decisions from JIRA comments
+   - Change summary table per layer with file-level descriptions
+   - Technical notes (multi-tenancy, breaking changes, dependencies, known limitations)
+6. **Previews the full document in chat** and waits for explicit developer confirmation
+7. Iterates with corrections if the developer requests changes
+8. Saves confirmed document to `~/Desktop/{TICKET_KEY}_DeveloperDocumentation.md`
+
+**Safety:** Never saves the file without explicit developer confirmation. Never fabricates code changes — all content is derived from the actual `git diff`. Stops immediately if the branch has no commits ahead of `development`.
+
+**Integrations:** JIRA MCP (required), Git
+
+---
+
 ### path-finder-qa
 
 Navigation lookup helper for QA. Given a view, tab, pop-up, window, or form name, searches **Xenapedia**, **Confluence**, and the codebase to return every navigation path where that UI element can be found in Xena. Always returns at least an approximate answer — never stops because a single source is unavailable.
@@ -184,8 +215,7 @@ Fetches a JIRA ticket via MCP, explores the Xena codebase to identify all affect
    - Numbered implementation steps in dependency order (Domain -> Contracts -> Mappings -> Database -> API -> Frontend)
    - Risks, multi-tenancy implications, and open questions
    - Estimated scope (small/medium/large)
-4. Saves the complete plan to `~/Desktop/{TICKET_KEY}-Dev plan.md` automatically after presenting it
-5. Implements the plan step-by-step after user approval
+4. Implements the plan step-by-step after user approval
 
 **Integrations:** JIRA MCP (required), Git
 
@@ -392,6 +422,8 @@ your-project/
         │   └── SKILL.md
         ├── create-jira-ticket/
         │   └── SKILL.md
+        ├── devdocs/
+        │   └── SKILL.md
         ├── path-finder-qa/
         │   └── SKILL.md
         ├── review-jira/
@@ -418,6 +450,7 @@ Once installed, invoke any skill using the `/skill-name` command in Claude Code:
 /architecture-analysis src/Xena.BookkeepingService
 /code-review XNA-18827
 /create-jira-ticket Fix the checkbox alignment on the invoice page
+/devdocs XNA-18827
 /path-finder-qa voucher registration tab
 /review-jira XNA-18827
 /secfix XNA-19000
@@ -434,8 +467,9 @@ Refer to the individual skill sections above for full usage details and options.
 1. `/create-jira-ticket` — create a well-structured ticket (or use an existing one)
 2. `/review-jira XNA-XXXXX` — analyse the ticket and get an implementation plan
 3. Implement the approved plan
-4. `/ship pr` — commit, push, and create a PR
-5. `/worklog 4h` — log your time
+4. `/devdocs XNA-XXXXX` — generate a Developer Overview document from your branch changes
+5. `/ship pr` — commit, push, and create a PR
+6. `/worklog 4h` — log your time
 
 ### Fix a security vulnerability
 1. `/secfix XNA-XXXXX` — full guided workflow from analysis to PR

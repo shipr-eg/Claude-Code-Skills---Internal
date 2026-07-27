@@ -139,15 +139,6 @@ Organized by layer:
 
 Then use `ExitPlanMode` to present the plan for user approval.
 
-## Step 4.5: Save Dev Plan to Desktop
-
-After presenting the plan, immediately save it to the Desktop using the `Write` tool:
-
-- **File path:** `~/Desktop/{TICKET_KEY}-Dev plan.md`
-- **Content:** The complete plan output from Step 4 (Ticket Summary, Analysis, Affected Areas, Implementation Steps, Risks & Considerations, Estimated Scope)
-
-Inform the user: "Plan saved to Desktop as `{TICKET_KEY}-Dev plan.md`."
-
 ## Step 5: Implement (Only After User Approval)
 
 **Do NOT begin implementation until the user explicitly approves the plan.**
