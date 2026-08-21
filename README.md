@@ -124,7 +124,7 @@ Creates structured JIRA tickets with professional descriptions, automatic summar
 
 ### devdocs
 
-Generates a concise **Developer Overview** document by combining JIRA ticket context with actual code changes on the current branch. Previews the document in chat before saving — the developer must confirm before the file is written.
+Generates a concise **Developer Overview** document by combining JIRA ticket context with the ticket-specific code changes on the current branch. Previews the document in chat before saving — the developer must confirm before the file is written — and then publishes the confirmed overview to Confluence.
 
 **Usage:**
 ```bash
@@ -134,21 +134,23 @@ Generates a concise **Developer Overview** document by combining JIRA ticket con
 
 **Workflow:**
 1. Fetches the JIRA ticket (summary, description, acceptance criteria, all comments for key team decisions)
-2. Runs `git diff development...HEAD` to identify all changed files on the current branch
-3. Groups changes by architectural layer (Domain → Contracts → Mappings → Database → Migrations → API → Frontend → Services → Resources → Tests)
-4. Reads each diff to produce a one-line description per file
-5. Composes a Markdown Developer Overview document including:
+2. Searches `git log development...HEAD --grep="{TICKET_KEY}"` for commits explicitly associated with the ticket
+3. If matching commits exist, analyses only the combined diff for those commits; if none exist, falls back to the full branch diff and cross-references the files with the JIRA context
+4. Groups ticket-scoped changes by architectural layer (Domain → Contracts → Mappings → Database → Migrations → API → Frontend → Services → Resources → Tests)
+5. Reads each in-scope diff to produce a one-line description per file
+6. Composes a Markdown Developer Overview document including:
    - Ticket summary and acceptance criteria
    - Key discussions and decisions from JIRA comments
    - Change summary table per layer with file-level descriptions
    - Technical notes (multi-tenancy, breaking changes, dependencies, known limitations)
-6. **Previews the full document in chat** and waits for explicit developer confirmation
-7. Iterates with corrections if the developer requests changes
-8. Saves confirmed document to `~/Desktop/{TICKET_KEY}_DeveloperDocumentation.md`
+7. **Previews the full document in chat** and waits for explicit developer confirmation
+8. Iterates with corrections if the developer requests changes
+9. Saves confirmed document to `~/Desktop/{TICKET_KEY}_DeveloperDocumentation.md`
+10. Finds or creates the ticket page beneath the XNA **Development Documentation** page, then creates a `{TICKET_KEY} — Developer Overview` child page containing the confirmed document in Confluence storage format
 
-**Safety:** Never saves the file without explicit developer confirmation. Never fabricates code changes — all content is derived from the actual `git diff`. Stops immediately if the branch has no commits ahead of `development`.
+**Safety:** Never saves or publishes the document without explicit developer confirmation. Never fabricates code changes — ticket-tagged content is derived from the matching commits, while fallback content is limited to files plausibly related to the JIRA ticket and is clearly labelled. Stops immediately if the branch has no commits ahead of `development`. A Confluence failure is reported without undoing the already-saved Desktop file.
 
-**Integrations:** JIRA MCP (required), Git
+**Integrations:** JIRA MCP (required), Git, Confluence MCP (optional for publication)
 
 ---
 
