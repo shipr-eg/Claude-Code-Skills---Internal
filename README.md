@@ -15,6 +15,7 @@ This repository contains custom Claude Code skills tailored for the **Xena** pro
 | [path-finder-qa](#path-finder-qa) | `/path-finder-qa <view-or-feature>` | Locate a view, tab, pop-up or form in Xena via Xenapedia, Confluence, and codebase |
 | [review-jira](#review-jira) | `/review-jira XNA-XXXXX` | Analyse a JIRA ticket and plan implementation |
 | [review-jira-qa](#review-jira-qa) | `/review-jira-qa XNA-XXXXX` | QA analysis of a JIRA ticket with Git commit analysis, impact assessment, and test case generation |
+| [tdd-review-jira](#tdd-review-jira) | `/tdd-review-jira XNA-XXXXX` | Create the complete TDD template, analyse the ticket, and implement the approved solution |
 | [secfix](#secfix) | `/secfix XNA-XXXXX` | Security vulnerability fix workflow |
 | [ship](#ship) | `/ship [commit\|push\|pr]` | Commit, push, and create PRs with conventional format |
 | [technotes](#technotes) | `/technotes <confluence-url>` | Generate technical release notes on Confluence |
@@ -220,6 +221,35 @@ Fetches a JIRA ticket via MCP, explores the Xena codebase to identify all affect
 4. Implements the plan step-by-step after user approval
 
 **Integrations:** JIRA MCP (required), Git
+
+---
+
+### tdd-review-jira
+
+Creates a complete Technical Design Document from the Desktop TDD template, then runs the full `review-jira` analysis and implementation workflow for the same ticket. This is the combined workflow when a ticket needs formal design documentation and implementation.
+
+**Usage:**
+```bash
+/tdd-review-jira XNA-18827
+/tdd-review-jira https://jira.eg.dk/browse/XNA-18827
+```
+
+**Workflow:**
+1. Fetches the complete JIRA context, including comments, linked tickets, and relevant attachments
+2. Explores the Xena codebase across Domain, Contracts, NHibernate Mappings, Database, Migrations, API, Frontend, Services, Resources, and Tests
+3. Creates the complete TDD with Document Revision History, Initiative/Epic Overview, Problem Description, Context or Background, Assumptions, Dependencies, Risks/Constraints, Current or Existing Solution / Design, High-Level Design, Solution Context Diagram, Solution Description, and Considered Alternative Solutions
+4. Presents the full TDD and waits for explicit approval or corrections
+5. Performs the complete `review-jira` analysis with affected areas, implementation steps, risks, dependencies, open questions, and estimated scope
+6. Enters plan mode and waits for separate explicit implementation-plan approval
+7. Saves the complete approved TDD, review findings, and implementation plan to `~/Desktop/{TICKET_KEY}_TDD_Review_Findings.md`
+8. Asks separately for approval to make the code changes
+9. Implements the approved solution in dependency order and runs relevant tests
+
+**Confirmation gates:** TDD approval, implementation-plan approval, and code-change approval are separate. The complete findings file must be saved successfully before code-change approval is requested. No implementation, commit, or push occurs without explicit approval.
+
+**Preservation:** The TDD template structure and the full `review-jira` analysis and implementation requirements are retained. Unknown information is marked as an open question rather than fabricated.
+
+**Integrations:** JIRA MCP (required), Git, local Xena codebase
 
 ---
 
